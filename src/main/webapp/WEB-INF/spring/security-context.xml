@@ -21,7 +21,7 @@
                 authentication-success-handler-ref="customLoginSuccessHandler"
                 authentication-failure-handler-ref="customLoginFailureHandler"
         />
-        <security:logout success-handler-ref="customLogoutHandler"/>
+        <security:logout logout-url="/auth/logout" success-handler-ref="customLogoutHandler"/>
 
         <security:csrf/>
         
@@ -35,7 +35,7 @@
         <security:intercept-url pattern="/auth/**" access="permitAll()"/>
         <security:intercept-url pattern="/**" access="isAuthenticated()"/>
 
-        <security:remember-me token-validity-seconds="604800" data-source-ref="dataSource"/>
+<!--        <security:remember-me token-validity-seconds="604800" data-source-ref="dataSource"/>-->
     </security:http>
 
     <security:authentication-manager>

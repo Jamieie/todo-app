@@ -37,6 +37,7 @@
     <!-- 로그아웃 버튼 -->
     <div class="logout-section">
         <form action="/auth/logout" method="post" id="logoutForm">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
             <button type="submit" class="logout-btn">
                 <i>🚪</i>
                 <span>로그아웃</span>
