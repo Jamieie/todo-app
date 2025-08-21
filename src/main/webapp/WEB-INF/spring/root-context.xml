@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring.xsd">
+
+    <context:component-scan base-package="org.example.todoapp.service"/>
+
+    <context:property-placeholder ignore-resource-not-found="true"/>
+
+    <!-- HikariCP 커넥션 풀의 설정 정보만 담고 있는 설정 객체 -->
+    <bean name="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
+        <property name="driverClassName" value="${DB_DRIVER_CLASS_NAME}"/>
+        <property name="jdbcUrl" value="${DB_URL}"/>
+        <property name="username" value="${DB_USERNAME}"/>
+        <property name="password" value="${DB_PASSWORD}"/>
+        <property name="connectionTimeout" value="${DB_CONNECTION_TIMEOUT:30000}"/>
+        <property name="minimumIdle" value="${DB_MINIMUM_IDLE:2}"/>
+        <property name="maximumPoolSize" value="${DB_MAXIMUM_POOL_SIZE:10}"/>
+    </bean>
+
+    <!-- 실제 데이터베이스 커넥션 풀을 생성하고 관리하는 객체 -->
+    <bean name="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
+        <constructor-arg ref="hikariConfig"/>
+    </bean>
+
+    <bean class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+        <property name="mapperLocations" value="classpath:mappers/${DB_TYPE:mariadb}/*.xml"/>
+    </bean>
+
+    <mybatis-spring:scan base-package="org.example.todoapp.mappers"/>
+</beans>

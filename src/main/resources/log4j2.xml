@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+
+    <!-- Appender, Layout 설정 -->
+    <Appenders>
+        <Console name="console" target="SYSTEM_OUT">
+            <PatternLayout/>
+        </Console>
+        <File name="file" fileName="./logs/file/sample.log" append="false">
+            <PatternLayout pattern="%d %5p [%c] %m%n"/>
+        </File>
+    </Appenders>
+
+    <!-- Logger 설정 -->
+    <Loggers>
+        <Logger name="com.zaxxer" level="DEBUG" additivity="false">
+            <AppenderRef ref="console"/>
+        </Logger>
+        <Logger name="org.example" level="TRACE" additivity="false">
+            <AppenderRef ref="console"/>
+        </Logger>
+        <!-- Spring NoHandlerFoundException 로그 숨기기 (Chrome DevTools 요청) -->
+        <Logger name="org.springframework.web.servlet.DispatcherServlet" level="ERROR" additivity="false">
+            <AppenderRef ref="console"/>
+        </Logger>
+        <Root level="ERROR">
+            <AppenderRef ref="console"/>
+        </Root>
+    </Loggers>
+
+</Configuration>

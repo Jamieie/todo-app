@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.todoapp.mappers.TaskMapper">
+
+    <select id="selectTaskById" resultType="TaskVO">
+        SELECT
+            task_id,
+            task_list_id,
+            title,
+            deadline,
+            estimate_min,
+            description,
+            period_day,
+            is_today,
+            is_completed,
+            completed_date,
+            display_order,
+            today_order
+        FROM
+            task
+        WHERE
+            task_id = #{id}
+    </select>
+
+    <insert id="insertTask">
+        <selectKey order="AFTER" keyProperty="taskId" resultType="long">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+
+        INSERT INTO
+            task (task_list_id, title, deadline, estimate_min, description, period_day, is_today, is_completed, completed_date, display_order, today_order)
+        VALUES
+            (#{taskListId}, #{title}, #{deadline}, #{estimateMin}, #{description}, #{periodDay}, #{isToday}, #{isCompleted}, #{completedDate}, #{displayOrder}, #{todayOrder})
+    </insert>
+
+
+    <update id="updateTaskByUserId">
+        UPDATE task AS t
+        SET t.title = #{task.title},
+            t.task_list_id = #{task.taskListId},
+            t.deadline = #{task.deadline},
+            t.estimate_min = #{task.estimateMin},
+            t.description = #{task.description},
+            t.period_day = #{task.periodDay},
+            t.is_today = #{task.isToday}
+        WHERE t.task_id = #{task.taskId}
+            AND EXISTS (
+                SELECT 1
+                FROM task_list tl
+                WHERE tl.task_list_id = t.task_list_id
+                AND tl.user_id = #{userId}
+                )
+    </update>
+
+    <delete id="deleteTaskById">
+        DELETE FROM task
+        WHERE task_id = #{id}
+    </delete>
+
+    <delete id="deleteByIdAndUserId">
+        DELETE t
+        FROM task t
+        JOIN task_list tl ON tl.task_list_id = t.task_list_id
+        WHERE t.task_id = #{taskId}
+        AND tl.user_id = #{userId};
+    </delete>
+
+    <update id="updateIsCompletedByIdAndUserId" parameterType="map">
+        UPDATE task AS t
+        SET t.is_completed = NOT t.is_completed,
+            t.updated_at   = NOW(),
+            t.completed_date = CASE
+                                WHEN t.is_completed = 1 THEN NOW()
+                                ELSE NULL
+                            END
+        WHERE t.task_id = #{taskId}
+            AND EXISTS (
+                SELECT 1
+                FROM task_list tl
+                WHERE tl.task_list_id = t.task_list_id
+                    AND tl.user_id = #{userId}
+            )
+    </update>
+
+    <select id="selectTaskToggleById" resultType="TaskToggleResult">
+        SELECT task_id, is_completed, completed_date from task where task_id = #{id}
+    </select>
+
+    <select id="selectTaskWithTaskListNameByIdAndUserId" resultType="TaskWithTaskListName">
+        SELECT t.task_id, t.title, t.deadline, t.estimate_min, t.is_today, t.period_day, t.description, t.is_completed, t.completed_date,
+            tl.task_list_id,
+            tl.name AS task_list_name     -- DTO에 taskListName으로 매핑하기 위해 alias 사용
+        FROM task t
+        JOIN task_list tl ON t.task_list_id = tl.task_list_id
+        WHERE t.task_id = #{taskId}
+        AND tl.user_id = #{userId}
+    </select>
+
+    <select id="selectAllWithTaskListNameByUserId" resultType="TaskWithTaskListName">
+        SELECT t.task_id, t.title, t.deadline, t.estimate_min, t.is_today, t.period_day, t.description, t.is_completed, t.completed_date,
+        tl.name AS task_list_name     -- DTO에 taskListName으로 매핑하기 위해 alias 사용
+        FROM task t
+        JOIN task_list tl ON t.task_list_id = tl.task_list_id
+        AND tl.user_id = #{userId}
+        ORDER BY t.task_list_id, t.display_order
+    </select>
+
+    <select id="selectNotTodayTasksByUserId" resultType="NotTodayTask">
+        SELECT t.task_id, t.title, t.estimate_min, t.deadline, t.display_order, tl.name AS task_list_name
+        FROM task t
+        JOIN task_list tl ON t.task_list_id = tl.task_list_id
+        WHERE t.is_today = 0
+        AND t.is_completed = 0
+        AND tl.user_id = #{userId}
+        ORDER BY t.task_list_id, t.display_order
+    </select>
+
+    <select id="selectTodayTasksByUserId" resultType="TodayTask">
+        <![CDATA[
+  SELECT
+    t.task_id, t.title, t.period_day, t.estimate_min, t.deadline, t.today_order, t.is_completed, tl.name AS task_list_name
+  FROM task t
+  JOIN task_list tl ON t.task_list_id = tl.task_list_id
+  WHERE tl.user_id = #{userId}
+    AND t.is_today = 1
+    AND (
+          t.is_completed = 0
+          OR (
+               t.is_completed = 1
+               AND t.completed_date >= CURDATE()
+               AND t.completed_date < CURDATE() + INTERVAL 1 DAY
+             )
+        )
+  ORDER BY
+    t.period_day,
+    COALESCE(t.today_order, 2147483647),
+    t.task_id
+  ]]>
+    </select>
+
+    <update id="updateIsTodayTrueByIdAndUserId">
+        UPDATE task AS t
+        SET t.is_today = 1,
+        t.updated_at   = NOW(),
+        t.period_day = #{periodDay}
+        WHERE t.task_id = #{taskId}
+        AND EXISTS (
+        SELECT 1
+        FROM task_list tl
+        WHERE tl.task_list_id = t.task_list_id
+        AND tl.user_id = #{userId}
+        )
+    </update>
+
+    <update id="updateIsTodayFalseByIdAndUserId">
+        UPDATE task AS t
+        SET t.is_today = 0,
+        t.updated_at   = NOW(),
+        t.period_day = NULL
+        WHERE t.task_id = #{taskId}
+        AND EXISTS (
+        SELECT 1
+        FROM task_list tl
+        WHERE tl.task_list_id = t.task_list_id
+        AND tl.user_id = #{userId}
+        )
+    </update>
+
+</mapper>
