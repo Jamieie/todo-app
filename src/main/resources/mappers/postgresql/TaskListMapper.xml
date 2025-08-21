@@ -18,7 +18,7 @@
     </select>
 
     <insert id="insert">
-        INSERT INTO task_list (task_list_id, user_id, name, is_default, is_deleted, created_at, updated_at)
-        VALUES (#{taskListId}, #{userId}, #{name}, #{isDefault}, #{isDeleted}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        INSERT INTO task_list (user_id, name, is_default, is_deleted, created_at, updated_at)
+        VALUES (#{userId}, #{name}, #{isDefault}, #{isDeleted}, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     </insert>
 </mapper>
