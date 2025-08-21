@@ -112,7 +112,7 @@
             margin: 0;
         }
         
-        .add-task-btn {
+        .add-task-list-btn {
             width: 40px;
             height: 40px;
             border: 2px solid #000000;
@@ -129,7 +129,7 @@
             flex-shrink: 0;
         }
         
-        .add-task-btn:hover {
+        .add-task-list-btn:hover {
             background: #000000;
             color: #ffffff;
             transform: scale(1.1);
@@ -152,6 +152,31 @@
             margin-bottom: 20px;
             padding: 15px 0;
             border-bottom: 2px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .add-task-btn {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #000000;
+            border-radius: 50%;
+            background: #ffffff;
+            color: #000000;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .add-task-btn:hover {
+            background: #000000;
+            color: #ffffff;
+            transform: scale(1.1);
         }
         
         /* Task 카드 */
@@ -474,89 +499,100 @@
                                 <div class="toggle-slider"></div>
                             </div>
                         </div>
-                        <button class="add-task-btn" onclick="showCreateTaskModal()" title="새 Task 추가">
+                        <button class="add-task-list-btn" onclick="showCreateTaskListModal()" title="새 Task List 추가">
                             +
                         </button>
                     </div>
                 </div>
 
-                <!-- 전체 빈 상태 -->
-                <c:if test="${empty tasks}">
-                    <div class="empty-state">아직 생성된 할 일이 없습니다. 새 Task를 추가해보세요!</div>
-                </c:if>
 
                 <!-- TaskList별 Task 그룹을 그리드로 표시 -->
-                <c:if test="${not empty tasks}">
+                <c:if test="${not empty taskListNames}">
                     <div class="tasklist-grid">
-                        <!-- TaskList별로 그룹핑하여 표시 -->
-                        <c:set var="processedTaskLists" value=""/>
-                        <c:forEach var="taskListName" items="${fn:split('', '')}">
-                            <c:set var="currentTaskListName" value=""/>
-                            <c:forEach var="task" items="${tasks}">
-                                <c:if test="${empty currentTaskListName or currentTaskListName != task.taskListName}">
-                                    <c:set var="currentTaskListName" value="${task.taskListName}"/>
-                                    <c:if test="${not fn:contains(processedTaskLists, task.taskListName)}">
-                                        <c:set var="processedTaskLists" value="${processedTaskLists},${task.taskListName}"/>
-                                        
-                                        <!-- TaskList 그룹 시작 -->
-                                        <div class="tasklist-group">
-                                            <div class="tasklist-header">📁 ${task.taskListName}</div>
-                                            
-                                            <!-- 해당 TaskList의 모든 Task들 -->
-                                            <c:set var="hasTasksInList" value="false"/>
-                                            <c:forEach var="taskInList" items="${tasks}">
-                                                <c:if test="${taskInList.taskListName == task.taskListName}">
-                                                    <c:set var="hasTasksInList" value="true"/>
-                                                    <div class="task-card ${taskInList.isCompleted ? 'completed' : ''} ${taskInList.isToday ? 'today' : ''}" onclick="openTaskDetail(${taskInList.taskId}); return false;" data-completed="${taskInList.isCompleted}">
-                                                        <div class="task-header">
-                                                            <button class="toggle-btn ${taskInList.isCompleted ? 'completed' : ''}" 
-                                                                    onclick="event.stopPropagation(); toggleTask(${taskInList.taskId}); return false;"
-                                                                    title="완료 토글">
-                                                                ${taskInList.isCompleted ? '✓' : '○'}
-                                                            </button>
-                                                            <div class="task-title">${taskInList.title}</div>
-                                                            <c:if test="${taskInList.isToday}">
-                                                                <span class="today-badge">오늘</span>
-                                                            </c:if>
-                                                            <button class="delete-btn" 
-                                                                    onclick="event.stopPropagation(); deleteTaskDirectly(${taskInList.taskId}); return false;"
-                                                                    title="삭제">
-                                                                🗑️
-                                                            </button>
-                                                        </div>
-                                                        <div class="task-meta">
-                                                            <c:if test="${not empty taskInList.estimateMin}">⏱️ ${taskInList.estimateMin}분</c:if>
-                                                            <c:if test="${not empty taskInList.deadline}"> • 📅 ${fn:substring(taskInList.deadline, 0, 10)}</c:if>
-                                                            <c:if test="${taskInList.isToday and not empty taskInList.periodDay}">
-                                                                <span class="period-badge">
-                                                                    <c:choose>
-                                                                        <c:when test="${taskInList.periodDay == 'MORNING'}">🌅 오전</c:when>
-                                                                        <c:when test="${taskInList.periodDay == 'AFTERNOON'}">🌞 오후</c:when>
-                                                                        <c:when test="${taskInList.periodDay == 'NIGHT'}">🌙 저녁</c:when>
-                                                                    </c:choose>
-                                                                </span>
-                                                            </c:if>
-                                                        </div>
-                                                    </div>
+                        <!-- 모든 TaskList를 표시 (Task가 없어도 표시) -->
+                        <c:forEach var="taskList" items="${taskListNames}">
+                            <!-- TaskList 그룹 시작 -->
+                            <div class="tasklist-group">
+                                <div class="tasklist-header">
+                                    <span>📁 ${taskList.name}</span>
+                                    <button class="add-task-btn" onclick="showCreateTaskModal(${taskList.taskListId})" title="새 Task 추가" data-task-list-id="${taskList.taskListId}">+</button>
+                                </div>
+                                
+                                <!-- 해당 TaskList의 모든 Task들 -->
+                                <c:set var="hasTasksInList" value="false"/>
+                                <c:forEach var="task" items="${tasks}">
+                                    <c:if test="${task.taskListId == taskList.taskListId}">
+                                        <c:set var="hasTasksInList" value="true"/>
+                                        <div class="task-card ${task.isCompleted ? 'completed' : ''} ${task.isToday ? 'today' : ''}" onclick="openTaskDetail(${task.taskId}); return false;" data-completed="${task.isCompleted}">
+                                            <div class="task-header">
+                                                <button class="toggle-btn ${task.isCompleted ? 'completed' : ''}" 
+                                                        onclick="event.stopPropagation(); toggleTask(${task.taskId}); return false;"
+                                                        title="완료 토글">
+                                                    ${task.isCompleted ? '✓' : '○'}
+                                                </button>
+                                                <div class="task-title">${task.title}</div>
+                                                <c:if test="${task.isToday}">
+                                                    <span class="today-badge">오늘</span>
                                                 </c:if>
-                                            </c:forEach>
-                                            
-                                            <!-- TaskList에 Task가 없을 때 -->
-                                            <c:if test="${not hasTasksInList}">
-                                                <div class="empty-state">할 일이 없습니다</div>
-                                            </c:if>
+                                                <button class="delete-btn" 
+                                                        onclick="event.stopPropagation(); deleteTaskDirectly(${task.taskId}); return false;"
+                                                        title="삭제">
+                                                    🗑️
+                                                </button>
+                                            </div>
+                                            <div class="task-meta">
+                                                <c:if test="${not empty task.estimateMin}">⏱️ ${task.estimateMin}분</c:if>
+                                                <c:if test="${not empty task.deadline}"> • 📅 ${fn:substring(task.deadline, 0, 10)}</c:if>
+                                                <c:if test="${task.isToday and not empty task.periodDay}">
+                                                    <span class="period-badge">
+                                                        <c:choose>
+                                                            <c:when test="${task.periodDay == 'MORNING'}">🌅 오전</c:when>
+                                                            <c:when test="${task.periodDay == 'AFTERNOON'}">🌞 오후</c:when>
+                                                            <c:when test="${task.periodDay == 'NIGHT'}">🌙 저녁</c:when>
+                                                        </c:choose>
+                                                    </span>
+                                                </c:if>
+                                            </div>
                                         </div>
                                     </c:if>
+                                </c:forEach>
+                                
+                                <!-- TaskList에 Task가 없을 때 -->
+                                <c:if test="${not hasTasksInList}">
+                                    <div class="empty-state">할 일이 없습니다</div>
                                 </c:if>
-                            </c:forEach>
+                            </div>
                         </c:forEach>
                     </div>
+                </c:if>
+                
+                <!-- TaskList가 없을 때 -->
+                <c:if test="${empty taskListNames}">
+                    <div class="empty-state">아직 생성된 Task List가 없습니다. 새 Task List를 추가해보세요!</div>
                 </c:if>
             </div>
         </div>
     </div>
 
 
+    <div id="createTaskListModal" class="modal create-task-list-modal">
+        <div class="modal-content">
+            <div class="modal-title">새 Task List 생성</div>
+            <form id="createTaskListForm">
+                <div class="form-group">
+                    <label class="form-label" for="taskListName">Task List 이름 *</label>
+                    <input type="text" id="taskListName" class="form-input" required placeholder="예: 업무, 개인, 학습">
+                </div>
+            </form>
+            
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-primary" onclick="createTaskList()">생성</button>
+                <button class="modal-btn modal-btn-secondary" onclick="closeCreateTaskListModal()">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task 생성 모달 -->
     <div id="createTaskModal" class="modal create-task-modal">
         <div class="modal-content">
             <div class="modal-title">새 Task 생성</div>
@@ -566,17 +602,7 @@
                     <input type="text" id="taskTitle" class="form-input" required>
                 </div>
                 
-                <div class="form-group">
-                    <label class="form-label" for="taskListSelect">Task List *</label>
-                    <select id="taskListSelect" class="form-select" required>
-                        <option value="">Task List 선택</option>
-                        <c:forEach var="taskList" items="${taskListNames}">
-                            <option value="${taskList.taskListId}" ${taskList.isDefault ? 'selected' : ''}>
-                                ${taskList.name}${taskList.isDefault ? ' (기본)' : ''}
-                            </option>
-                        </c:forEach>
-                    </select>
-                </div>
+                <input type="hidden" id="selectedTaskListId" value="">
                 
                 <div class="form-group">
                     <label class="form-label" for="taskDescription">설명</label>
@@ -589,24 +615,24 @@
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label" for="taskEstimate">예상 시간 (분)</label>
-                    <input type="number" id="taskEstimate" class="form-input" min="1" placeholder="30">
+                    <label class="form-label" for="taskEstimate">예상 시간(분)</label>
+                    <input type="number" id="taskEstimate" class="form-input" min="1" placeholder="예: 30">
                 </div>
                 
                 <div class="form-group">
                     <div class="form-checkbox-group">
-                        <input type="checkbox" id="taskIsToday" class="form-checkbox">
-                        <label class="form-label" for="taskIsToday" style="margin-bottom: 0;">오늘 할 일로 설정</label>
+                        <input type="checkbox" id="createTaskIsToday" class="form-checkbox">
+                        <label class="form-label" for="createTaskIsToday" style="margin-bottom: 0;">오늘 할 일로 설정</label>
                     </div>
                 </div>
                 
-                <div class="form-group" id="periodDayGroup" style="display: none;">
-                    <label class="form-label" for="taskPeriodDay">시간대 *</label>
-                    <select id="taskPeriodDay" class="form-select">
+                <div class="form-group" id="createTaskPeriodDayGroup" style="display: none;">
+                    <label class="form-label" for="createTaskPeriodDay">시간대</label>
+                    <select id="createTaskPeriodDay" class="form-select">
                         <option value="">시간대 선택</option>
-                        <option value="MORNING">🌅 오전</option>
+                        <option value="MORNING">🌅 아침</option>
                         <option value="AFTERNOON">🌞 오후</option>
-                        <option value="NIGHT">🌙 저녁</option>
+                        <option value="NIGHT">🌙 밤</option>
                     </select>
                 </div>
             </form>
@@ -636,86 +662,43 @@
             return headers;
         }
         
-        // Task List 데이터 (서버에서 전달받은 기본 데이터)
-        let taskListData = [
-            <c:forEach var="taskList" items="${taskListNames}" varStatus="status">
-                {
-                    taskListId: ${taskList.taskListId},
-                    name: "${taskList.name}",
-                    isDefault: ${taskList.isDefault}
-                }${!status.last ? ',' : ''}
-            </c:forEach>
-        ];
+        // Task List 관리 함수들은 제거됨 - Task List 생성만 지원
         
-        
-        // Task List 드롭다운 업데이트 함수
-        function updateTaskListDropdown(taskLists) {
-            const select = document.getElementById('taskListSelect');
-            const currentValue = select.value;
-            
-            // 기존 옵션들 제거 (첫 번째 "Task List 선택" 옵션 제외)
-            while (select.children.length > 1) {
-                select.removeChild(select.lastChild);
-            }
-            
-            // 새 옵션들 추가
-            taskLists.forEach(taskList => {
-                const option = document.createElement('option');
-                option.value = taskList.taskListId;
-                option.textContent = taskList.name + (taskList.isDefault ? ' (기본)' : '');
-                if (taskList.isDefault && !currentValue) {
-                    option.selected = true;
-                }
-                select.appendChild(option);
-            });
-            
-            // 이전 선택값이 있다면 복원
-            if (currentValue) {
-                select.value = currentValue;
-            }
+        // Task List 생성 모달 관련 함수들
+        function showCreateTaskListModal() {
+            document.getElementById('createTaskListModal').style.display = 'block';
+            document.getElementById('createTaskListForm').reset();
         }
         
-        // API에서 최신 Task List 목록 가져오기
-        async function refreshTaskLists() {
-            try {
-                const response = await fetch('/task-lists');
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.taskListNames) {
-                        taskListData = result.taskListNames;
-                        updateTaskListDropdown(taskListData);
-                    }
-                }
-            } catch (error) {
-                console.warn('Task List 갱신 실패:', error);
-                // 실패 시 기본 데이터 사용 (사용자에게는 알리지 않음)
-            }
+        function closeCreateTaskListModal() {
+            document.getElementById('createTaskListModal').style.display = 'none';
         }
         
         // Task 생성 모달 관련 함수들
-        function showCreateTaskModal() {
+        function showCreateTaskModal(taskListId) {
             document.getElementById('createTaskModal').style.display = 'block';
             document.getElementById('createTaskForm').reset();
             
-            // 기본 데이터로 드롭다운 초기화
-            updateTaskListDropdown(taskListData);
+            // reset() 호출 후 taskListId 설정해야 함
+            const hiddenInput = document.getElementById('selectedTaskListId');
+            hiddenInput.value = taskListId;
             
-            // 백그라운드에서 최신 데이터 가져오기 (필요시만)
-            refreshTaskLists();
+            // 시간대 그룹도 초기화
+            document.getElementById('createTaskPeriodDayGroup').style.display = 'none';
         }
         
         function closeCreateTaskModal() {
             document.getElementById('createTaskModal').style.display = 'none';
         }
         
-        // 오늘 할 일 체크박스 변경 시 시간대 선택 표시/숨김
-        document.getElementById('taskIsToday').addEventListener('change', function() {
-            const periodGroup = document.getElementById('periodDayGroup');
+        // 오늘 할 일 체크박스 변경 시 시간대 선택 표시/숨김 (Task 생성 모달용)
+        document.getElementById('createTaskIsToday').addEventListener('change', function() {
+            const periodGroup = document.getElementById('createTaskPeriodDayGroup');
             if (this.checked) {
                 periodGroup.style.display = 'block';
             } else {
                 periodGroup.style.display = 'none';
-                document.getElementById('taskPeriodDay').value = '';
+                document.getElementById('createTaskPeriodDay').value = '';
             }
         });
         
@@ -792,12 +775,12 @@
         async function createTask() {
             // 폼 데이터 수집
             const title = document.getElementById('taskTitle').value.trim();
-            const taskListId = document.getElementById('taskListSelect').value;
+            const taskListId = document.getElementById('selectedTaskListId').value;
             const description = document.getElementById('taskDescription').value.trim();
             const deadline = document.getElementById('taskDeadline').value;
             const estimateMin = document.getElementById('taskEstimate').value;
-            const isToday = document.getElementById('taskIsToday').checked;
-            const periodDay = document.getElementById('taskPeriodDay').value;
+            const isToday = document.getElementById('createTaskIsToday').checked;
+            const periodDay = document.getElementById('createTaskPeriodDay').value;
             
             // 유효성 검사
             if (!title) {
@@ -805,8 +788,8 @@
                 return;
             }
             
-            if (!taskListId) {
-                showAlertModal('알림', 'Task List를 선택해주세요.');
+            if (!taskListId || taskListId === '' || taskListId === 'null') {
+                showAlertModal('알림', 'Task List ID가 설정되지 않았습니다. 다시 시도해주세요.');
                 return;
             }
             
@@ -900,12 +883,52 @@
             });
         }
         
+        // Task List 생성 함수
+        async function createTaskList() {
+            // 폼 데이터 수집
+            const taskListName = document.getElementById('taskListName').value.trim();
+            
+            // 유효성 검사
+            if (!taskListName) {
+                showAlertModal('알림', 'Task List 이름을 입력해주세요.');
+                return;
+            }
+            
+            // 요청 데이터 구성
+            const taskListData = {
+                name: taskListName
+            };
+            
+            try {
+                const response = await fetch('/task-lists', {
+                    method: 'POST',
+                    headers: getCSRFHeaders(),
+                    body: JSON.stringify(taskListData)
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    // 성공 시 모달 닫고 페이지 새로고침
+                    closeCreateTaskListModal();
+                    location.reload();
+                } else {
+                    const errorData = await response.json();
+                    showAlertModal('오류', 'Task List 생성에 실패했습니다: ' + (errorData.message || '알 수 없는 오류'));
+                }
+            } catch (error) {
+                console.error('Create task list error:', error);
+                showAlertModal('오류', '네트워크 오류가 발생했습니다.');
+            }
+        }
+
         // 페이지 로드 시 토글 상태 초기화
         document.addEventListener('DOMContentLoaded', function() {
             const toggle = document.getElementById('showCompletedToggle');
             if (showCompleted) {
                 toggle.classList.add('active');
             }
+            
         });
     </script>
 

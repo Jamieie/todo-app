@@ -1,6 +1,7 @@
 package org.example.todoapp.service;
 
 import lombok.RequiredArgsConstructor;
+import org.example.todoapp.domain.CreateTaskListRequestDTO;
 import org.example.todoapp.domain.TaskListName;
 import org.example.todoapp.domain.TaskListVO;
 import org.example.todoapp.exception.TaskListNotFoundException;
@@ -30,10 +31,20 @@ public class TaskListServiceImpl implements TaskListService {
 
     @Override
     public void createDefaultTaskList(String userId) {
+        createTaskList(userId, "My Tasks", true);
+    }
+
+    @Override
+    public void createTaskList(String userId, CreateTaskListRequestDTO createTaskListRequestDTO) {
+        createTaskList(userId, createTaskListRequestDTO.getName(), false);
+    }
+
+
+    private void createTaskList(String userId, String taskListName, Boolean isDefault) {
         TaskListVO taskListVO = new TaskListVO();
         taskListVO.setUserId(userId);
-        taskListVO.setName("My Tasks");
-        taskListVO.setIsDefault(true);
+        taskListVO.setName(taskListName);
+        taskListVO.setIsDefault(isDefault);
         taskListVO.setIsDeleted(false);
 
         int count = taskListMapper.insert(taskListVO);

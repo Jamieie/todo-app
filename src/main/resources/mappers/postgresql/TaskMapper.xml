@@ -99,7 +99,7 @@
     </select>
 
     <select id="selectAllWithTaskListNameByUserId" resultType="TaskWithTaskListName">
-        SELECT t.task_id, t.title, t.deadline, t.estimate_min, t.is_today, t.period_day, t.description, t.is_completed, t.completed_date,
+        SELECT t.task_id, t.title, t.task_list_id, t.deadline, t.estimate_min, t.is_today, t.period_day, t.description, t.is_completed, t.completed_date,
         tl.name AS task_list_name     -- DTO에 taskListName으로 매핑하기 위해 alias 사용
         FROM task t
         JOIN task_list tl ON t.task_list_id = tl.task_list_id
