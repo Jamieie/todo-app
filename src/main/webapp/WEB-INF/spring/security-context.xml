@@ -12,7 +12,9 @@
     <bean id="customLogoutHandler" class="org.example.todoapp.security.handler.CustomLogoutHandler"/>
     <bean id="customLoginFailureHandler" class="org.example.todoapp.security.handler.CustomLoginFailureHandler"/>
 
-    <security:http request-matcher="ant">
+    <!-- Spring Security 필터 체인 설정 -->
+    <security:http request-matcher="ant">    <!-- URL 접근 제어 방식 : Ant -->
+        <!-- 폼 로그인 설정 -->
         <security:form-login
                 login-page="/auth/login"
                 login-processing-url="/auth/login"
@@ -21,23 +23,30 @@
                 authentication-success-handler-ref="customLoginSuccessHandler"
                 authentication-failure-handler-ref="customLoginFailureHandler"
         />
+
+        <!-- 로그아웃 설정 -->
         <security:logout logout-url="/auth/logout" success-handler-ref="customLogoutHandler"/>
 
+        <!-- csrf 설정 (기본값: 활성화) -->
         <security:csrf/>
-        
+
+        <!-- 세션 설정: 세션 고정 공격 방지 (migrateSession: 기존 세션 유지 & 세션 ID만 새로 발급 -->
         <security:session-management session-fixation-protection="migrateSession">
             <security:concurrency-control max-sessions="1" expired-url="/auth/login"/>
         </security:session-management>
 
         <security:access-denied-handler ref="custom403Handler"/>
 
+        <!-- 권한 매핑 -->
         <security:intercept-url pattern="/" access="permitAll()"/>
         <security:intercept-url pattern="/auth/**" access="permitAll()"/>
         <security:intercept-url pattern="/**" access="isAuthenticated()"/>
 
+        <!-- Remember-me 기능 : 쿠키 기반 로그인 유지, 7일간 유효 -->
 <!--        <security:remember-me token-validity-seconds="604800" data-source-ref="dataSource"/>-->
     </security:http>
 
+    <!-- 인증 매니저 설정 -->
     <security:authentication-manager>
         <security:authentication-provider user-service-ref="customUserDetailsService">
             <security:password-encoder ref="passwordEncoder"/>

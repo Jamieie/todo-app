@@ -11,8 +11,9 @@
 
     <context:component-scan base-package="org.example.todoapp.controller"/>
 
-    <!-- @AuthenticationPrincipal 사용 위해 필요 -->
+    <!-- 컨트롤러에 붙는 어노테이션을 스프링이 해석할 수 있게끔 연결해주는 설정 -->
     <mvc:annotation-driven>
+        <!-- @AuthenticationPrincipal 사용 위해 필요 -->
         <mvc:argument-resolvers>
             <bean class="org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver"/>
         </mvc:argument-resolvers>

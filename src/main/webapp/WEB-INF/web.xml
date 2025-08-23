@@ -4,14 +4,14 @@
          xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
          version="6.0">
 
-    <!-- tomcat이 뜰 때 spring이 같이 뜨도록 해줌 -->
+    <!-- Tomcat 기동 시 Spring의 Root ApplicationContext를 함께 로딩하도록 설정 -->
     <listener>
-        <listener-class>org.springframework.web.context.ContextLoaderListener </listener-class>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
     </listener>
 
-    <!-- root-context.xml 루트 컨텍스트로 로딩 -->
-    <!-- security-context.xml 루트 컨텍스트로 로딩 -->
-    <!-- 루트 컨텍스트 -->
+    <!-- Root ApplicationContext에 로딩할 설정 파일 지정 -->
+    <!-- root-context.xml : 공통 Bean, DB, Service, Repository 설정 -->
+    <!-- security-context.xml : Spring Security 설정 -->
     <context-param>
         <param-name>contextConfigLocation</param-name>
         <param-value>
@@ -20,23 +20,27 @@
         </param-value>
     </context-param>
 
-    <!-- MVC는 Servlet을 이용해서 띄움 -->
-    <!-- 서블릿 컨텍스트 -->
+    <!-- DispatcherServlet (Front Controller) 등록 -->
+    <!-- MVC 관련 Bean(@Controller, ViewResolver 등)은 Servlet ApplicationContext에 로딩됨 -->
     <servlet>
         <servlet-name>appServlet</servlet-name>
         <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <!-- DispatcherServlet 전용 설정 파일(servlet-context.xml) 지정 -->
         <init-param>
             <param-name>contextConfigLocation</param-name>
             <param-value>WEB-INF/spring/servlet-context.xml</param-value>
         </init-param>
+        <!-- Tomcat 시작 시 이 서블릿을 함께 로딩 -->
         <load-on-startup>1</load-on-startup>
     </servlet>
 
+    <!-- DispatcherServlet이 모든 요청("/")을 처리 -->
     <servlet-mapping>
         <servlet-name>appServlet</servlet-name>
         <url-pattern>/</url-pattern>
     </servlet-mapping>
 
+    <!-- 필터: 한글 깨짐 방지를 위한 인코딩 필터 -->
     <filter>
         <filter-name>encodingFilter</filter-name>
         <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
@@ -54,6 +58,8 @@
         <url-pattern>/*</url-pattern>
     </filter-mapping>
 
+    <!-- Spring Security의 핵심 필터체인 등록 -->
+    <!-- DelegatingFilterProxy → springSecurityFilterChain Bean을 위임 호출 -->
     <filter>
         <filter-name>springSecurityFilterChain</filter-name>
         <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
@@ -63,12 +69,13 @@
         <url-pattern>/*</url-pattern>
     </filter-mapping>
 
+    <!-- 세션 관리 설정 -->
     <session-config>
         <session-timeout>30</session-timeout>
         <cookie-config>
             <name>JSESSIONID</name>
-            <http-only>true</http-only>
-            <secure>true</secure>
+            <http-only>true</http-only>  <!-- 자바스크립트에서 접근 불가 (XSS 방어) -->
+            <secure>true</secure>  <!-- HTTPS 환경에서만 전송 (평문 전송 방지) -->
         </cookie-config>
     </session-config>
 

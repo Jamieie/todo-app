@@ -7,6 +7,7 @@
 
     <context:component-scan base-package="org.example.todoapp.service"/>
 
+    <!-- ${...} 형태의 변수 치환 지원, 외부파일 없으면 무시 -->
     <context:property-placeholder ignore-resource-not-found="true"/>
 
     <!-- HikariCP 커넥션 풀의 설정 정보만 담고 있는 설정 객체 -->
