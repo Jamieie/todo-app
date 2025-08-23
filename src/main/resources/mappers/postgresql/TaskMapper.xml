@@ -64,23 +64,22 @@
         WHERE task_id = #{taskId}
         AND task_list_id IN (
             SELECT task_list_id FROM task_list WHERE user_id = #{userId}
-        );
+        )
     </delete>
 
     <update id="updateIsCompletedByIdAndUserId" parameterType="map">
         UPDATE task
         SET is_completed = NOT is_completed,
-            updated_at   = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP,
             completed_date = CASE
-                                WHEN is_completed = true THEN CURRENT_TIMESTAMP
+                                WHEN is_completed = false THEN CURRENT_TIMESTAMP
                                 ELSE NULL
                             END
         WHERE task_id = #{taskId}
-            AND EXISTS (
-                SELECT 1
-                FROM task_list tl
-                WHERE tl.task_list_id = task.task_list_id
-                    AND tl.user_id = #{userId}
+            AND EXISTS (SELECT 1
+                        FROM task_list tl
+                        WHERE tl.task_list_id = task.task_list_id
+                        AND tl.user_id = #{userId}
             )
     </update>
 
